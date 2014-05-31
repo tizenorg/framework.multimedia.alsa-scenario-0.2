@@ -1,0 +1,127 @@
+alsa-scenario (0.2.1-2) unstable; urgency=low
+
+  * Change alsa scenario data path
+  * Git: slp/kernel/alsa-scenario-0.2
+  * Tag: alsa-scenario_0.2.1-2
+
+ -- KwangHui Cho <kwanghui.cho@samsung.com>  Wed, 07 Mar 2012 09:08:59 +0900
+
+alsa-scenario (0.2.1-1) unstable; urgency=low
+
+  * fixing for a parsing error of control names
+  * Git: slp/kernel/alsa-scenario-0.2
+  * Tag: alsa-scenario_0.2.1-1
+
+ -- Elbert Kim <elbert.kim@samsung.com>  Fri, 27 Jan 2012 18:16:55 +0900
+
+alsa-scenario (0.2.1-0) unstable; urgency=low
+
+  * enable x86 build & dbg package
+  * Git: 165.213.180.234:/slp/kernel/alsa-scenario-0.2
+  * Tag: alsa-scenario_0.2.1-0
+
+ -- Seungbae Shin <seungbae.shin@samsung.com>  Fri, 09 Dec 2011 15:14:04 +0900
+
+alsa-scenario (0.2.0-13) unstable; urgency=low
+
+  * Fix bug in close()
+  * Git: 165.213.180.234:/slp/kernel/alsa-scenario-0.2
+  * Tag: alsa-scenario_0.2.0-13
+
+ -- Chanwoo Choi <cw00.choi@samsung.com>  Tue, 21 Jun 2011 15:31:39 +0900
+
+alsa-scenario (0.2.0-12) unstable; urgency=low
+
+  * Remove "WARNING" messgae
+  * Git: 165.213.180.234:/slp/kernel/alsa-scenario-0.2
+  * Tag: alsa-scenario_0.2.0-12
+
+ -- Chanwoo Choi <cw00.choi@samsung.com>  Mon, 28 Mar 2011 12:06:27 +0900
+
+alsa-scenario (0.2.0-11) unstable; urgency=low
+
+  * Remove the dependency of kcontrol 'id number'
+  * Git: 165.213.180.234:/slp/kernel/alsa-scenario-0.2
+  * Tag: alsa-scenario_0.2.0-11
+
+ -- ChanWoo Choi <cw00.choi@samsung.com>  Fri, 04 Mar 2011 15:40:44 +0900
+
+alsa-scenario (0.2.0-10) unstable; urgency=low
+
+  * Change lib path from /usr/share/ascenario to /opt/etc/sound
+  * Git: 165.213.180.234:/slp/kernel/alsa-scenario-0.2
+  * Tag: alsa-scenario_0.2.0-10
+
+ -- ChanWoo Choi <cw00.choi@samsung.com>  Fri, 07 Jan 2011 15:42:15 +0900
+
+alsa-scenario (0.2.0-9) unstable; urgency=low
+
+  * Delete "O_NOATIME" option
+  * Git: 165.213.180.234:/git/kernel/alsa-scenario-0.2
+  * Tag: alsa-scenario_0.2.0-9
+
+ -- ChanWoo Choi <cw00.choi@samsung.com>  Thu, 19 Aug 2010 20:21:11 +0900
+
+alsa-scenario (0.2.0-8) unstable; urgency=low
+
+  * Revert : "Delete unnecessary function ( ..."
+  * Add the doxygen comment for snd_scenario_unset_scn()
+  * Git: 165.213.180.234:/git/kernel/alsa-scenario-0.2
+  * Tag: alsa-scenario_0.2.0-8
+
+ -- ChanWoo Choi <cw00.choi@samsung.com>  Tue, 13 Jul 2010 19:37:33 +0900
+
+alsa-scenario (0.2.0-7) unstable; urgency=low
+
+  * Add EXPORT_API macro to hide unwanted functions
+  * Delete unnecessary function (snd_scenario_unset_scn)
+  * Git: 165.213.180.234:/git/kernel/alsa-scenario-0.2
+  * Tag: alsa-scenario_0.2.0-7
+
+ -- ChanWoo Choi <cw00.choi@samsung.com>  Tue, 13 Jul 2010 17:24:32 +0900
+
+alsa-scenario (0.2.0-6) unstable; urgency=low
+
+  * Fix bug of memory leak (free_scn)
+  * Git: 165.213.180.234:/git/kernel/alsa-scenario-0.2
+  * Tag: alsa-scenario_0.2.0-6
+
+ -- ChanWoo Choi <cw00.choi@samsung.com>  Mon, 03 May 2010 16:33:37 +0900
+
+alsa-scenario (0.2.0-5) unstable; urgency=low
+
+  * Add *.postint file and Modify debian/control concerning package dependency
+  * Git: 165.213.180.234:/git/kernel/alsa-scenario-0.2
+  * Tag: alsa-scenario_0.2.0-5
+
+ -- ChanWoo Choi <cw00.choi@samsung.com>  Wed, 28 Apr 2010 13:08:15 +0900
+
+alsa-scenario (0.2.0-4) unstable; urgency=low
+
+  * Toolchain Upgrade
+
+ -- ChanWoo Choi <cw00.choi@samsung.com>  Thu, 25 Mar 2010 13:38:35 +0900
+
+alsa-scenario (0.2.0-3) unstable; urgency=low
+
+  * Fix bug related to management of scenario history
+
+ -- ChanWoo Choi <cw00.choi@samsung.com>  Wed, 20 Jan 2010 22:35:40 +0900
+
+alsa-scenario (0.2.0-2) unstable; urgency=low
+
+  * Change supported architecture
+
+ -- ChanWoo Choi <cw00.choi@samsung.com>  Thu, 07 Jan 2010 11:53:12 +0900
+
+alsa-scenario (0.2.0-1) unstable; urgency=low
+
+  * Change data path from /etc/alsa to /usr/share/ascenario.
+
+ -- KwangHui Cho <kwanghui.cho@samsung.com>  Wed, 02 Dec 2009 10:46:37 +0900
+
+alsa-scenario (0.2.0) unstable; urgency=low
+
+  * Initial Release.
+
+ -- KwangHui Cho <kwanghui.cho@samsung.com>  Wed, 02 Dec 2009 10:46:37 +0900

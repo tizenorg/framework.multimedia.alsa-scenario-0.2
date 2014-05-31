@@ -1,0 +1,264 @@
+dnl Process this file with autoconf to produce a configure script.
+AC_PREREQ(2.59)
+AC_INIT(src/ascenario.c)
+dnl *************************************************
+dnl current:revision:age
+dnl change (without API) = c:r+1:a
+dnl change API = c+1:0:a
+dnl add API = c+1:0:a+1
+dnl remove API = c+1:0:0
+dnl *************************************************
+
+# libtool versioning
+ASCENARIO_MAJOR_VERSION=0
+ASCENARIO_MINOR_VERSION=2
+ASCENARIO_MICRO_VERSION=0
+ASCENARIO_VERSION=$ASCENARIO_MAJOR_VERSION.$ASCENARIO_MINOR_VERSION.$ASCENARIO_MICRO_VERSION
+AC_SUBST(ASCENARIO_MAJOR_VERSION)
+AC_SUBST(ASCENARIO_MINOR_VERSION)
+AC_SUBST(ASCENARIO_MICRO_VERSION)
+AC_SUBST(ASCENARIO_VERSION)
+
+LT_VERSION=$ASCENARIO_MICRO_VERSION
+LT_RELEASE=$ASCENARIO_MAJOR_VERSION.$ASCENARIO_MINOR_VERSION
+AC_SUBST(LT_VERSION)
+AC_SUBST(LT_RELEASE)
+
+AC_CANONICAL_SYSTEM
+AM_INIT_AUTOMAKE(scenario-lib, $ASCENARIO_VERSION)
+eval LIBTOOL_VERSION_INFO="2:0:0"
+dnl *************************************************
+AM_CONDITIONAL(INSTALL_M4, test -n "${ACLOCAL}")
+
+# Test for new silent rules
+m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
+
+AC_PREFIX_DEFAULT(/usr)
+
+dnl Checks for programs.
+
+dnl try to gues cross-compiler if not set
+if test "x$target" != "x$host" -a -z "`echo $CC | grep -e '-gcc'`";
+then
+  AC_MSG_CHECKING(for cross-compiler)
+
+  which ${program_prefix}gcc >/dev/null 2>&1 && CC=${program_prefix}gcc
+  which ${target_cpu}-${target_os}-gcc >/dev/null 2>&1 \
+  && CC=${target_cpu}-${target-os}-gcc
+  which ${target_cpu}-${target_vendor}-${target_os}-gcc >/dev/null 2>&1 \
+  && CC=${target_cpu}-${target_vendor}-${target_os}-gcc
+
+  AC_MSG_RESULT($CC)
+fi
+
+AC_PROG_CC
+AC_PROG_CPP
+AC_PROG_INSTALL
+AC_PROG_LN_S
+AC_DISABLE_STATIC
+AC_LIBTOOL_DLOPEN
+AM_PROG_LIBTOOL
+
+dnl Checks for header files.
+AC_HEADER_STDC
+AM_CONFIG_HEADER(include/config.h)
+
+dnl Checks for typedefs, structures, and compiler characteristics.
+AC_C_CONST
+AC_C_INLINE
+AC_HEADER_TIME
+
+SAVE_LIBRARY_VERSION
+AC_SUBST(LIBTOOL_VERSION_INFO)
+
+test "x$prefix" = xNONE && prefix=$ac_default_prefix
+
+dnl tizen dlog------------------------------------------------------
+AC_ARG_ENABLE(dlog, AC_HELP_STRING([--enable-dlog], [using dlog]),
+[
+ case "${enableval}" in
+	 yes) USE_DLOG=yes ;;
+	 no)  USE_DLOG=no ;;
+	 *)   AC_MSG_ERROR(bad value ${enableval} for --enable-dlog) ;;
+ esac
+ ],[USE_DLOG=no])
+
+if test "x$USE_DLOG" = "xyes"; then
+	PKG_CHECK_MODULES(DLOG, dlog)
+	AC_SUBST(DLOG_CFLAGS)
+	AC_SUBST(DLOG_LIBS)
+fi
+AM_CONDITIONAL(USE_DLOG, test "x$USE_DLOG" = "xyes")
+dnl end tizen dlog--------------------------------------------------
+
+PKG_CHECK_MODULES(ALSA, alsa)
+
+dnl ALSA configuration directory
+AC_ARG_WITH(configdir,
+    AS_HELP_STRING([--with-configdir=dir],
+	[path where ALSA config files are stored]),
+    confdir="$withval", confdir="")
+if test -z "$confdir"; then
+    eval dir="$datadir"
+    case "$dir" in
+    /*) ;;
+    *) dir="$prefix/share"
+    esac
+    confdir="$dir/alsa"
+fi
+ALSA_CONFIG_DIR="$confdir"
+AC_DEFINE_UNQUOTED(ALSA_CONFIG_DIR, "$confdir", [directory containing ALSA configuration database])
+AC_SUBST(ALSA_CONFIG_DIR)
+
+dnl ALSA plugin directory
+test "x$exec_prefix" = xNONE && exec_prefix=$prefix
+
+AC_ARG_WITH(plugindir,
+    AS_HELP_STRING([--with-plugindir=dir],
+	[path where ALSA plugin files are stored]),
+    plugindir="$withval", plugindir="")
+if test -z "$plugindir"; then
+    eval dir="$libdir"
+    case "$dir" in
+    /*) ;;
+    *) dir="$dir"
+    esac
+    plugindir="$dir/$PACKAGE"
+fi
+AC_DEFINE_UNQUOTED(ALSA_PLUGIN_DIR, "$plugindir", [directory containing ALSA add-on modules])
+ALSA_PLUGIN_DIR="$plugindir"
+AC_SUBST(ALSA_PLUGIN_DIR)
+
+dnl Check for versioned symbols
+AC_MSG_CHECKING(for versioned symbols)
+AC_ARG_WITH(versioned,
+  AS_HELP_STRING([--with-versioned],
+    [shared library will be compiled with versioned symbols (default = yes)]),
+  versioned="$withval", versioned="yes")
+if test "$versioned" = "yes"; then
+  # it seems that GNU ld versions since 2.10 are not broken
+  xres=`grep '^VERSION=' libtool | cut -d = -f 2 | cut -d \" -f 2`
+  major=`echo $xres | cut -d . -f 1`
+  minor=`echo $xres | cut -d . -f 2`
+  pass=0
+  if test $major -eq 1 -a $minor -gt 3; then
+    pass=1
+  else
+    if test $major -gt 1; then
+      pass=1
+    fi
+  fi
+  if test $pass -eq 1; then
+    AC_DEFINE(VERSIONED_SYMBOLS,,[compiled with versioned symbols])
+    AC_MSG_RESULT(yes)
+  else
+    AC_MSG_RESULT(broken libtool - use libtool v1.4+; no versions)
+  fi
+else
+  AC_MSG_RESULT(no)
+fi
+AM_CONDITIONAL(VERSIONED_SYMBOLS, test x$versioned = xyes)
+
+dnl Check for symbolic-functions
+AC_MSG_CHECKING(for symbolic-functions)
+AC_ARG_ENABLE(symbolic-functions,
+  AS_HELP_STRING([--enable-symbolic-functions],
+    [use -Bsymbolic-functions option if available (optmization for size and speed)]),
+  symfuncs="$enableval", symfuncs="no")
+if test "$symfuncs" = "yes"; then
+  if ld --help | grep -q -- '-Bsymbolic-functions'; then
+    AC_MSG_RESULT(yes)
+  else
+    AC_MSG_RESULT(not supported by ld)
+    symfuncs="no"
+  fi
+else
+  AC_MSG_RESULT(no)
+fi
+AM_CONDITIONAL(SYMBOLIC_FUNCTIONS, test x"$symfuncs" = xyes)
+
+dnl See if toolchain has a custom prefix for symbols ...
+AC_MSG_CHECKING(for custom symbol prefixes)
+SYMBOL_PREFIX=` \
+	echo "PREFIX=__USER_LABEL_PREFIX__" \
+		| ${CPP-${CC-gcc} -E} - 2>&1 \
+		| ${EGREP-grep} "^PREFIX=" \
+		| ${SED-sed} "s:^PREFIX=::"`
+AC_DEFINE_UNQUOTED([__SYMBOL_PREFIX], "$SYMBOL_PREFIX", [Toolchain Symbol Prefix])
+AC_SUBST(SYMBOL_PREFIX)
+AC_MSG_RESULT($SYMBOL_PREFIX)
+
+dnl Check for debug...
+AC_MSG_CHECKING(for debug)
+AC_ARG_WITH(debug,
+  AS_HELP_STRING([--with-debug],
+    [library will be compiled with asserts (default = yes)]),
+  debug="$withval", debug="yes")
+if test "$debug" = "yes"; then
+  AC_MSG_RESULT(yes)
+else
+  AC_DEFINE(NDEBUG,,[No assert debug])
+  AC_MSG_RESULT(no)
+fi
+
+if test "$debug" = "yes"; then
+  AC_MSG_CHECKING(for debug assert)
+  AC_ARG_ENABLE(debug-assert,
+    AS_HELP_STRING([--enable-debug],
+      [enable assert call at the default error message handler]),
+    debug_assert="$enableval", debug_assert="no")
+  if test "$debug_assert" = "yes"; then
+    AC_MSG_RESULT(yes)
+    AC_DEFINE(ALSA_DEBUG_ASSERT,,[Enable assert at error message handler])
+  else
+    AC_MSG_RESULT(no)
+  fi
+fi
+
+AC_SUBST(ALSA_DEPLIBS)
+
+dnl Check for architecture
+AC_MSG_CHECKING(for architecture)
+case "$target" in
+i?86*)
+  AC_MSG_RESULT(x86)
+  ;;
+x86_64*)
+  AC_MSG_RESULT(x86)
+  ;;
+alpha*)
+  AC_MSG_RESULT(alpha)
+  ;;
+powerpc*|ppc*)
+  AC_MSG_RESULT(ppc)
+  CPPFLAGS="$CPPFLAGS -D__ppc__"
+  ;;
+ia64*)
+  AC_MSG_RESULT(ia64)
+  CPPFLAGS="$CPPFLAGS -D__ia64__"
+  ;;
+mips*)
+  AC_MSG_RESULT(mips)
+  CPPFLAGS="$CPPFLAGS -D__mips__"
+  ;;
+arm*)
+  AC_MSG_RESULT(arm)
+  CPPFLAGS="$CPPFLAGS -D__arm__"
+  ;;
+*)
+  AC_MSG_RESULT($host_cpu)
+  echo "No atomic operations supported.."
+  ;;
+esac
+
+dnl Check for wordexp.h
+AC_CHECK_HEADERS([wordexp.h])
+
+dnl Make a symlink for inclusion of alsa/xxx.h
+#if test ! -L "$srcdir"/include/alsa ; then
+#  echo "Making a symlink include/alsa"
+#  rm -f "$srcdir"/include/alsa
+#  ln -sf . "$srcdir"/include/alsa
+#fi
+
+AC_OUTPUT(Makefile include/Makefile src/Makefile examples/Makefile pkgconfig/Makefile pkgconfig/libascenario.pc) 

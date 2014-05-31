@@ -1,0 +1,14 @@
+#!/bin/sh
+# Automatically added by dh_makeshlibs
+if [ ${USER} == "root" ];
+then
+     # Change file owner
+     # 1. library
+     chown root:root /usr/lib/libascenario*
+fi
+
+#Change file permissions
+# 1. library
+chmod 644 /usr/lib/libascenario*
+
+# End automatically added section

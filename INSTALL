@@ -1,0 +1,10 @@
+From git:-
+
+./gitcompile
+make install
+
+From tarball:-
+
+./configure
+make
+make install

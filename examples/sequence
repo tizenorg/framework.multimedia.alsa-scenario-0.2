@@ -1,0 +1,5 @@
+# comment
+kcontrol "Beep Playback Volume" = "23"
+kcontrol "Beep Playback Switch" = "1"
+msleep = 100 # fofoof
+kcontrol "Beep Playback Volume" = "42"

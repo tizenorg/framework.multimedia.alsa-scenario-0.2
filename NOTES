@@ -1,0 +1,24 @@
+File locations
+==============
+
+Each sound card will have a master file describing it's supported scenarios.
+This file does not describe the control settings for each scenario, but does
+describe control aliases and control setting files.
+
+The master scenario file will be /etc/alsa/scenario/card_name.conf
+
+The scenario control descriptors for "card_name" will be in
+/etc/alsa/scenario/card_name/
+
+Scenario Generation
+===================
+
+The scenario master file needs to be hand written for each sound card.
+An example can be found in examples/default.conf
+
+The scenario control descriptor file can be generated as follows.
+
+1. Use alsamixer, amixer, etc to adjust sound card control to desired values.
+2. Dump sound card values with examples/scndump "scndump card_name > scenario"
+3. Copy scenario file to /etc/alsa/scenario/card_name/
+ 

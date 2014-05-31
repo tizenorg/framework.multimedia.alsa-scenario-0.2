@@ -1,0 +1,25 @@
+Source: alsa-scenario
+Priority: optional
+Maintainer: ChanWoo Choi <cw00.choi@samsung.com>
+Uploaders: Seungbae Shin <seungbae.shin@samsung.com>
+Build-Depends: debhelper (>= 5), autotools-dev, libasound2-dev (>= 1.0.16)
+Standards-Version: 3.7.2
+Section: libs
+
+Package: libascenario-dev
+Section: libdevel
+Architecture: any
+Depends: libascenario-0
+Description: ALSA Scenario development package
+
+Package: libascenario-0
+Section: libs
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: ALSA Scenario package
+
+Package: libascenario-dbg
+Section: debug
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: ALSA Scenario debug package
