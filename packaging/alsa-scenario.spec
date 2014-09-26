@@ -9,7 +9,7 @@ Source1001: packaging/alsa-scenario.manifest
 Requires(post):   /sbin/ldconfig
 Requires(postun): /sbin/ldconfig
 BuildRequires:    pkgconfig(alsa)
-
+BuildRequires:    pkgconfig
 
 %description
 ALSA Scenario package
@@ -32,8 +32,9 @@ ALSA Scenario package (devel)
 cp %{SOURCE1001} .
 cp -f %{_datadir}/libtool/config/config.guess %{_builddir}/%{name}-%{version}/
 cp -f %{_datadir}/libtool/config/config.sub %{_builddir}/%{name}-%{version}/
-%configure --disable-static
-make %{?jobs:-j%jobs}
+%reconfigure --disable-static
+%__make %{?_smp_mflags}
+
 
 %install
 rm -rf %{buildroot}
@@ -49,10 +50,8 @@ rm -rf %{buildroot}
 %manifest alsa-scenario.manifest
 %{_libdir}/libascenario-0.2.so.*
 
-
 %files devel
 %manifest alsa-scenario.manifest
 %{_includedir}/alsa/*.h
 %{_libdir}/libascenario.so
 %{_libdir}/pkgconfig/libascenario.pc
-
