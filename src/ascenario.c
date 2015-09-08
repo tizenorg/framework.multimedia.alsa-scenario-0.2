@@ -32,6 +32,12 @@
 
 #include "../include/ascenario.h"
 
+
+#ifdef USE_DLOG
+#include <dlog.h>
+#define DLOG_TAG	"ASCN"
+#endif
+
 #define USE_FOPEN
 
 #define PRE_SEQ		0
@@ -40,8 +46,12 @@
 #define MAX_NAME	64
 #define MAX_FILE	256
 #define MAX_BUF		256
+/* #define ALSA_SCN_DIR	"/etc/alsa/scenario" */
+/* #define ALSA_SCN_DIR	"/usr/share/ascenario" */
 #define ALSA_SCN_DIR	"/usr/etc/sound"
-
+#define CSC_ALSA_SCN_DIR	"/opt/system/csc-default/usr/tuning"
+#define SKIP_SCN_SET_PATH "/tmp/skip_scn_set"
+static char csc_scn_data;
 /*
  * Stores all scenario settings for 1 kcontrol. Hence we have a
  * control_settings for each kcontrol in card.
@@ -93,8 +103,24 @@ struct snd_scenario {
 	const char **list;
 	struct scenario_info *scenario; /* var len array of scenario info */
 	struct control_settings *control; /* var len array of controls */
+	int skip_scn_set;
 };
 
+#ifdef USE_DLOG
+#define scn_error(fmt, arg...) \
+		SLOG(LOG_ERROR, DLOG_TAG, fmt, ##arg)
+
+#define scn_warning(fmt, arg...) \
+		SLOG(LOG_WARN, DLOG_TAG, fmt, ##arg)
+
+#define scn_info(fmt, arg...) \
+		SLOG(LOG_INFO, DLOG_TAG, fmt, ##arg)
+
+#define scn_stdout(fmt, arg...) \
+		SLOG(LOG_ERROR, DLOG_TAG, fmt, ##arg)
+#else
+#define scn_info	scn_error
+#define scn_warning	scn_error
 static void scn_error(const char *fmt,...)
 {
 	va_list va;
@@ -111,6 +137,7 @@ static void scn_stdout(const char *fmt,...)
 	vfprintf(stdout, fmt, va);
 	va_end(va);
 }
+#endif
 
 static inline void set_value(struct snd_scenario *scn,
 	struct control_settings *control, int count, unsigned short val)
@@ -202,10 +229,14 @@ static int add_control(snd_ctl_t *handle, snd_ctl_elem_id_t *id,
 {
 	int err;
 	snd_ctl_elem_info_t *info;
+#ifdef CHECK_KCONTROLS_ON_SCN_OPEN
 	snd_ctl_elem_value_t *control;
+#endif
 
 	snd_ctl_elem_info_alloca(&info);
+#ifdef CHECK_KCONTROLS_ON_SCN_OPEN
 	snd_ctl_elem_value_alloca(&control);
+#endif
 
 	snd_ctl_elem_info_set_id(info, id);
 	err = snd_ctl_elem_info(handle, info);
@@ -214,8 +245,10 @@ static int add_control(snd_ctl_t *handle, snd_ctl_elem_id_t *id,
 		return err;
 	}
 
+#ifdef CHECK_KCONTROLS_ON_SCN_OPEN
 	snd_ctl_elem_value_set_id(control, id);
 	snd_ctl_elem_read(handle, control);
+#endif
 
 	strncpy(control_settings->name, snd_ctl_elem_id_get_name(id),
 		MAX_NAME);
@@ -236,14 +269,14 @@ static int parse_controls(struct snd_scenario *scn, FILE *f, char *filename)
 		tbuf = buf;
 
 		/* get name start */
-		while (*tbuf != 0 && *tbuf != '\'')
+		while (*tbuf != 0 && *tbuf != '\'' && *tbuf != '\"')
 			tbuf++;
 		if (*tbuf == 0)
 			return -EINVAL;
 		name_start = ++tbuf;
 
 		/* get name end */
-		while (*tbuf != 0 && *tbuf != '\'')
+		while (*tbuf != 0 && *tbuf != '\'' && *tbuf != '\"')
 			tbuf++;
 		if (*tbuf == 0)
 			return -EINVAL;
@@ -525,8 +558,12 @@ static int read_scenario_file(struct snd_scenario *scn)
 	char filename[MAX_FILE];
 	struct scenario_info *info = &scn->scenario[scn->current_scenario];
 
-	snprintf(filename, MAX_FILE, "%s/%s/%s", ALSA_SCN_DIR, scn->card_name,
-		info->file);
+	if (csc_scn_data)
+		snprintf(filename, MAX_FILE, "%s/%s/%s", CSC_ALSA_SCN_DIR, scn->card_name,
+				info->file);
+	else
+		snprintf(filename, MAX_FILE, "%s/%s/%s", ALSA_SCN_DIR, scn->card_name,
+				info->file);
 
 	f = fopen(filename, "r");
 	if (f == NULL) {
@@ -546,8 +583,12 @@ static int read_scenario_file(struct snd_scenario *scn)
 	char filename[MAX_FILE];
 	struct scenario_info *info = &scn->scenario[scn->current_scenario];
 
-	snprintf(filename, MAX_FILE, "%s/%s/%s", ALSA_SCN_DIR, scn->card_name,
-		info->file);
+	if (csc_scn_data)
+		snprintf(filename, MAX_FILE, "%s/%s/%s", CSC_ALSA_SCN_DIR, scn->card_name,
+				info->file);
+	else
+		snprintf(filename, MAX_FILE, "%s/%s/%s", ALSA_SCN_DIR, scn->card_name,
+				info->file);
 
 	fd = open(filename, O_RDONLY); // | O_NOATIME);
 	if (fd < 0) {
@@ -578,12 +619,20 @@ static int read_sequence_file(struct snd_scenario *scn, int position)
 	struct scenario_info *info = &scn->scenario[scn->current_scenario];
 
 	if (position == PRE_SEQ) {
-		snprintf(filename, MAX_FILE, "%s/%s/%s", ALSA_SCN_DIR, scn->card_name,
-			info->pre_sequence_file);
+		if (csc_scn_data)
+			snprintf(filename, MAX_FILE, "%s/%s/%s", CSC_ALSA_SCN_DIR, scn->card_name,
+						info->pre_sequence_file);
+		else
+			snprintf(filename, MAX_FILE, "%s/%s/%s", ALSA_SCN_DIR, scn->card_name,
+						info->pre_sequence_file);
 	}
 	else {
-		snprintf(filename, MAX_FILE, "%s/%s/%s", ALSA_SCN_DIR, scn->card_name,
-			info->post_sequence_file);
+		if (csc_scn_data)
+			snprintf(filename, MAX_FILE, "%s/%s/%s", CSC_ALSA_SCN_DIR, scn->card_name,
+					info->post_sequence_file);
+		else
+			snprintf(filename, MAX_FILE, "%s/%s/%s", ALSA_SCN_DIR, scn->card_name,
+					info->post_sequence_file);
 	}
 
 	f = fopen(filename, "r");
@@ -606,12 +655,20 @@ static int read_sequence_file(struct snd_scenario *scn, int position)
 	struct scenario_info *info = &scn->scenario[scn->current_scenario];
 
 	if (position == PRE_SEQ) {
-		snprintf(filename, MAX_FILE, "%s/%s/%s", ALSA_SCN_DIR, scn->card_name,
-			info->pre_sequence_file);
+		if (csc_scn_data)
+			snprintf(filename, MAX_FILE, "%s/%s/%s", CSC_ALSA_SCN_DIR, scn->card_name,
+					info->pre_sequence_file);
+		else
+			snprintf(filename, MAX_FILE, "%s/%s/%s", ALSA_SCN_DIR, scn->card_name,
+					info->pre_sequence_file);
 	}
 	else {
-		snprintf(filename, MAX_FILE, "%s/%s/%s", ALSA_SCN_DIR, scn->card_name,
-			info->post_sequence_file);
+		if (csc_scn_data)
+			snprintf(filename, MAX_FILE, "%s/%s/%s", CSC_ALSA_SCN_DIR, scn->card_name,
+					info->post_sequence_file);
+		else
+			snprintf(filename, MAX_FILE, "%s/%s/%s", ALSA_SCN_DIR, scn->card_name,
+					info->post_sequence_file);
 	}
 
 	fd = open(filename, O_RDONLY); // | O_NOATIME);
@@ -833,7 +890,10 @@ static int import_master_config(struct snd_scenario *scn)
 	FILE *f;
 	char filename[MAX_FILE];
 
-	snprintf(filename, MAX_FILE, "%s/%s.conf", ALSA_SCN_DIR, scn->card_name);
+	if (csc_scn_data)
+		snprintf(filename, MAX_FILE, "%s/%s.conf", CSC_ALSA_SCN_DIR, scn->card_name);
+	else
+		snprintf(filename, MAX_FILE, "%s/%s.conf", ALSA_SCN_DIR, scn->card_name);
 
 	f = fopen(filename, "r");
 	if (f == NULL) {
@@ -851,7 +911,10 @@ static int import_master_config(struct snd_scenario *scn)
 	FILE *f;
 	char filename[MAX_FILE];
 
-	snprintf(filename, MAX_FILE, "%s/%s.conf", ALSA_SCN_DIR, scn->card_name);
+	if (csc_scn_data)
+		snprintf(filename, MAX_FILE, "%s/%s.conf", CSC_ALSA_SCN_DIR, scn->card_name);
+	else
+		snprintf(filename, MAX_FILE, "%s/%s.conf", ALSA_SCN_DIR, scn->card_name);
 
 	fd = open(filename, O_RDONLY); // | O_NOATIME);
 	if (fd < 0) {
@@ -956,6 +1019,29 @@ free:
 close:
 	snd_ctl_close(handle);
 	return ret;
+}
+
+/* check CSC path
+ * @scn: scenario
+ *
+ * Check whether scenario master config file existence in CSC path
+ */
+static int check_csc_files(struct snd_scenario *scn)
+{
+	int ret;
+	FILE *f;
+	char filename[MAX_FILE];
+
+	snprintf(filename, MAX_FILE, "%s/%s.conf", CSC_ALSA_SCN_DIR, scn->card_name);
+
+	f = fopen(filename, "r");
+	if (f == NULL) {
+		csc_scn_data = 0;
+		return -errno;
+	}
+	csc_scn_data = 1;
+	fclose(f);
+	return 0;
 }
 
 /* import_scenario_files -
@@ -1107,11 +1193,29 @@ struct snd_scenario *snd_scenario_open(const char *card_name)
 		return NULL;
 	}
 
+	/* Check CSC path files */
+	err = check_csc_files(scn);
+	if (!err)
+		scn_info("Use CSC scenarios [%d]\n", err);
+	else
+		scn_info("Use default scenarios [%d]\n", -err);
+
 	/* get info on scenarios and verify against card */
 	err = import_scenario_files(scn);
 	if (err < 0) {
 		free_scn(scn);
 		return NULL;
+	}
+
+	/* check file existence "/tmp/skip_scn_set"
+	   whether skip set scn or not */
+	err = access(SKIP_SCN_SET_PATH, F_OK);
+	if (!err) {
+		scn_info("Skip set scenario mode\n");
+		scn->skip_scn_set = 1;
+	}
+	else {
+		scn->skip_scn_set = 0;
 	}
 
 	return scn;
@@ -1290,6 +1394,12 @@ int snd_scenario_set_scn(struct snd_scenario *scn, const char *name)
 	return -EINVAL;
 
 found:
+	if (scn->skip_scn_set) {
+		scn_info("skip set %s\n", name);
+		return 0;
+	}
+	scn_info("%s\n", name);
+
 	/* scenario found - now open card */
 	scn->current_scenario = i;
 

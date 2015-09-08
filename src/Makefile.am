@@ -14,3 +14,8 @@ libascenario_la_LDFLAGS = \
 	-release $(LT_RELEASE) \
 	-no-undefined \
 	-export-dynamic
+
+if USE_DLOG
+libascenario_la_CFLAGS = $(DLOG_CFLAGS) -DUSE_DLOG
+libascenario_la_LDFLAGS += $(DLOG_LIBS)
+endif

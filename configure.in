@@ -73,6 +73,24 @@ AC_SUBST(LIBTOOL_VERSION_INFO)
 
 test "x$prefix" = xNONE && prefix=$ac_default_prefix
 
+dnl tizen dlog------------------------------------------------------
+AC_ARG_ENABLE(dlog, AC_HELP_STRING([--enable-dlog], [using dlog]),
+[
+ case "${enableval}" in
+	 yes) USE_DLOG=yes ;;
+	 no)  USE_DLOG=no ;;
+	 *)   AC_MSG_ERROR(bad value ${enableval} for --enable-dlog) ;;
+ esac
+ ],[USE_DLOG=no])
+
+if test "x$USE_DLOG" = "xyes"; then
+	PKG_CHECK_MODULES(DLOG, dlog)
+	AC_SUBST(DLOG_CFLAGS)
+	AC_SUBST(DLOG_LIBS)
+fi
+AM_CONDITIONAL(USE_DLOG, test "x$USE_DLOG" = "xyes")
+dnl end tizen dlog--------------------------------------------------
+
 PKG_CHECK_MODULES(ALSA, alsa)
 
 dnl ALSA configuration directory
